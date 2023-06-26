@@ -42,7 +42,7 @@ var _ = Describe("Tests for elastic.go", func() {
 			})),
 		}
 
-		It("Returns error status bad request", func() {
+		It("experimental test", func() {
 			var indexer Elastic
 			indexer.index = "go-commons-test"
 			indexer.getnewclient = func(c elasticsearch.Config) (*elasticsearch.Client, error) {
