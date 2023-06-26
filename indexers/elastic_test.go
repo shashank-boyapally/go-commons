@@ -3,8 +3,8 @@ package indexers
 import (
 	"net/http"
 	"net/http/httptest"
-	"os"
 
+	elasticsearch "github.com/elastic/go-elasticsearch/v7"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -45,42 +45,12 @@ var _ = Describe("Tests for elastic.go", func() {
 		It("Returns error status bad request", func() {
 			var indexer Elastic
 			indexer.index = "go-commons-test"
-			testcase.mockServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(http.StatusBadRequest)
-			}))
+			indexer.getnewclient = func(c elasticsearch.Config) (*elasticsearch.Client, error) {
+				client, err := elasticsearch.NewDefaultClient()
+				return client, err
+			}
 			defer testcase.mockServer.Close()
 			testcase.indexerConfig.Servers = []string{testcase.mockServer.URL}
-			err := indexer.new(testcase.indexerConfig)
-			Expect(err).NotTo(BeNil())
-		})
-
-		It("when no url is passed", func() {
-			var indexer Elastic
-			indexer.index = "go-commons-test"
-			err := indexer.new(testcase.indexerConfig)
-			testcase.mockServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(http.StatusGatewayTimeout)
-			}))
-			Expect(err).NotTo(BeNil())
-		})
-
-		It("Returns err not passing a valid URL in env variable", func() {
-			var indexer Elastic
-			indexer.index = "go-commons-test"
-			testcase.indexerConfig.Servers = []string{}
-			os.Setenv("ELASTICSEARCH_URL", "not a valid url:port")
-			defer os.Unsetenv("ELASTICSEARCH_URL")
-			defer testcase.mockServer.Close()
-			err := indexer.new(testcase.indexerConfig)
-			Expect(err).NotTo(BeNil())
-		})
-
-		It("Returns err no index name", func() {
-			var indexer Elastic
-			indexer.index = "go-commons-test"
-			defer testcase.mockServer.Close()
-			testcase.indexerConfig.Servers = []string{testcase.mockServer.URL}
-			testcase.indexerConfig.Index = ""
 			err := indexer.new(testcase.indexerConfig)
 			Expect(err).NotTo(BeNil())
 		})

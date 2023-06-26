@@ -36,7 +36,14 @@ const elastic = "elastic"
 
 // Elastic ElasticSearch instance
 type Elastic struct {
-	index string
+	index        string
+	getnewclient func(elasticsearch.Config) (*elasticsearch.Client, error)
+}
+
+// not a type of getnewclient, it is not used as getnewclient frim esindexer is being used
+func Createnewclient(c elasticsearch.Config) (*elasticsearch.Client, error) {
+	client, err := elasticsearch.NewDefaultClient()
+	return client, err
 }
 
 // ESClient elasticsearch client instance
@@ -58,7 +65,7 @@ func (esIndexer *Elastic) new(indexerConfig IndexerConfig) error {
 		Addresses: indexerConfig.Servers,
 		Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: indexerConfig.InsecureSkipVerify}},
 	}
-	ESClient, err = elasticsearch.NewClient(cfg)
+	ESClient, err = esIndexer.getnewclient(cfg)
 	if err != nil {
 		return fmt.Errorf("error creating the ES client: %s", err)
 	}
